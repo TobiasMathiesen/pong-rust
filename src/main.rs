@@ -3,12 +3,12 @@ extern crate rand;
 
 use ggez::event::Keycode;
 use ggez::graphics::{DrawMode, Point2};
-use ggez::{conf, event, graphics, Context, GameResult};
+use ggez::{event, graphics, Context, GameResult};
 use rand::prelude::*;
 use std::f32;
 
-const PAD_SPEED: f32 = 7.5;
-const BALL_SPEED: f32 = 9.0;
+const PAD_SPEED: f32 = 9.0;
+const BALL_SPEED: f32 = 7.5;
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 
@@ -204,6 +204,7 @@ struct Ball {
     angle: f32,
     direction: Direction,
     last_hit_index: u32,
+    speed: f32
 }
 
 impl Ball {
@@ -214,6 +215,7 @@ impl Ball {
             angle: 90.0,
             direction: Direction::Right,
             last_hit_index: 0,
+            speed: BALL_SPEED
         }
     }
 
@@ -224,8 +226,8 @@ impl Ball {
         }
 
         // Move in direction of angle
-        let x = self.pos.0 + (self.angle.to_radians().sin() * BALL_SPEED);
-        let y = self.pos.1 + (self.angle.to_radians().cos() * BALL_SPEED);
+        let x = self.pos.0 + (self.angle.to_radians().sin() * self.speed);
+        let y = self.pos.1 + (self.angle.to_radians().cos() * self.speed);
 
         self.pos = (x, y);
 
@@ -253,8 +255,9 @@ impl Ball {
         let x = SCREEN_WIDTH as f32 / 2.0 - self.size.0 / 2.0;
         let y = SCREEN_HEIGHT as f32 / 2.0 - self.size.1 / 2.0;
 
+        self.speed = BALL_SPEED;
         self.pos = (x, y);
-        self.angle = thread_rng().gen_range(60.0, 120.0);
+        self.angle = thread_rng().gen_range(80.0, 100.0);
         if random() {
             self.direction = Direction::Left;
             self.angle = -self.angle;
@@ -286,7 +289,7 @@ impl Ball {
 
         // If collided, handle collision by setting new angle
         if let Some(pad) = collider_pad {
-            self.angle = 112.5 - 45.0 * ((self.pos.1 - pad.pos.1) / pad.size.1);
+            self.angle = 100.0 - 20.0 * ((self.pos.1 - pad.pos.1) / pad.size.1);
 
             if self.direction == Direction::Right {
                 self.angle = -self.angle; // Reverse angle for this direction
@@ -295,6 +298,13 @@ impl Ball {
             } else {
                 self.direction = Direction::Right;
                 self.pos.0 = pad.pos.0 + pad.pos.0; // Move out of pad
+            }
+
+            // Give more speed if pad was moving
+            if pad.direction != Direction::Still {
+                self.speed *= 1.25;
+            } else {
+                self.speed = BALL_SPEED;
             }
         }
         
